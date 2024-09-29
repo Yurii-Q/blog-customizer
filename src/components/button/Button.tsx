@@ -1,5 +1,3 @@
-import { Text } from 'components/text';
-
 import styles from './Button.module.scss';
 
 export const Button = ({
@@ -13,9 +11,7 @@ export const Button = ({
 }) => {
 	return (
 		<button className={styles.button} type={type} onClick={onClick}>
-			<Text weight={800} uppercase>
-				{title}
-			</Text>
+			{title}
 		</button>
 	);
 };
