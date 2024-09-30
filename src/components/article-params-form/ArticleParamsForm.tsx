@@ -5,7 +5,7 @@ import { Select } from '../select';
 import { Separator } from '../separator';
 import { Text } from '../text';
 
-import { useEffect, useRef, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 
 import {
 	defaultArticleState,
@@ -21,138 +21,112 @@ import {
 import styles from './ArticleParamsForm.module.scss';
 
 export type TArticleParamsFormParams = {
-	onSubmit: () => void;
+	onSubmit: (options: ArticleStateType) => void;
 	onReset: () => void;
-	onSelectFontFamilyOption: (selected: OptionType) => void;
-	onSelectFontColor: (selected: OptionType) => void;
-	onSelectSizeFont: (selected: OptionType) => void;
-	onSelectBackColor: (selected: OptionType) => void;
-	onSelectContentWidth: (selected: OptionType) => void;
-	options: ArticleStateType;
 };
 
 export const ArticleParamsForm = ({
 	onSubmit,
 	onReset,
-	onSelectFontFamilyOption,
-	onSelectFontColor,
-	onSelectSizeFont,
-	onSelectBackColor,
-	onSelectContentWidth,
-	options,
 }: TArticleParamsFormParams) => {
-	const [isOpen, setIsOpen] = useState(false);
+	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const rootRef = useRef<HTMLDivElement>(null);
 
-	const [font, setFont] = useState<OptionType>(options.fontFamilyOption);
-	const [fontColor, setFontColor] = useState<OptionType>(options.fontColor);
-	const [backColor, setBackColor] = useState<OptionType>(
-		options.backgroundColor
+	const [options, setOptions] = useState<ArticleStateType>(
+		structuredClone(defaultArticleState)
 	);
-	const [contentWidth, setContentWidth] = useState<OptionType>(
-		options.contentWidth
-	);
-	const [fontSize, setFontSize] = useState<OptionType>(options.fontSizeOption);
 
 	const handleClick = (event: MouseEvent) => {
 		const { target } = event;
 		if (
 			target instanceof Node &&
 			!rootRef.current?.contains(target) &&
-			isOpen
+			isMenuOpen
 		) {
 			handelArrowButtonClick();
 		}
 	};
 
 	useEffect(() => {
-		if (isOpen) {
+		if (isMenuOpen) {
 			window.addEventListener('mousedown', handleClick);
 			return;
 		}
 		return window.removeEventListener('mousedown', handleClick);
-	}, [isOpen]);
+	}, [isMenuOpen]);
 
 	function handelArrowButtonClick() {
-		if (isOpen) {
-			setIsOpen(false);
+		if (isMenuOpen) {
+			setIsMenuOpen(false);
 			rootRef.current?.classList.remove(styles.container_open);
 		} else {
 			rootRef.current?.classList.add(styles.container_open);
-			setIsOpen(true);
+			setIsMenuOpen(true);
 		}
 	}
 
 	function handleSelectFontFamilyOption(selected: OptionType) {
-		setFont(selected);
-		onSelectFontFamilyOption(selected);
+		setOptions({ ...options, fontFamilyOption: selected });
 	}
 
 	function handleSelectFontColor(selected: OptionType) {
-		setFontColor(selected);
-		onSelectFontColor(selected);
+		setOptions({ ...options, fontColor: selected });
 	}
 
 	function handleSelectSizeFont(selected: OptionType) {
-		setFontSize(selected);
-		onSelectSizeFont(selected);
+		setOptions({ ...options, fontSizeOption: selected });
 	}
 
 	function handleSelectBackColor(selected: OptionType) {
-		setBackColor(selected);
-		onSelectBackColor(selected);
+		setOptions({ ...options, backgroundColor: selected });
 	}
 
 	function handleSelectContentWidth(selected: OptionType) {
-		setContentWidth(selected);
-		onSelectContentWidth(selected);
+		setOptions({ ...options, contentWidth: selected });
 	}
 
 	function handleFormResetBtn() {
-		setFont(defaultArticleState.fontFamilyOption);
-		setFontColor(defaultArticleState.fontColor);
-		setBackColor(defaultArticleState.backgroundColor);
-		setContentWidth(defaultArticleState.contentWidth);
-		setFontSize(defaultArticleState.fontSizeOption);
+		setOptions(structuredClone(defaultArticleState));
 		onReset();
 	}
 
-	function handleFormSubmitBtn() {
-		onSubmit();
+	function handleFormSubmitBtn(e: FormEvent) {
+		onSubmit(structuredClone(options));
+		e.preventDefault();
 	}
 
 	return (
 		<>
-			<ArrowButton onClick={handelArrowButtonClick} isOpen={isOpen} />
+			<ArrowButton onClick={handelArrowButtonClick} isOpen={isMenuOpen} />
 			<aside className={styles.container} ref={rootRef}>
-				<form onSubmit={(e) => e.preventDefault()} className={styles.form}>
+				<form onSubmit={handleFormSubmitBtn} className={styles.form}>
 					<Text as='h2' size={31} weight={800} uppercase>
 						Задайте параметры
 					</Text>
 					<Select
-						selected={font}
+						selected={options.fontFamilyOption}
 						options={fontFamilyOptions}
 						title='Шрифт'
 						onChange={handleSelectFontFamilyOption}></Select>
 					<RadioGroup
-						selected={fontSize}
+						selected={options.fontSizeOption}
 						options={fontSizeOptions}
 						title='Размер Шрифта'
-						name={fontSize.title}
+						name={options.fontSizeOption.title}
 						onChange={handleSelectSizeFont}></RadioGroup>
 					<Select
-						selected={fontColor}
+						selected={options.fontColor}
 						options={fontColors}
 						title='Цвет шрифта'
 						onChange={handleSelectFontColor}></Select>
 					<Separator></Separator>
 					<Select
-						selected={backColor}
+						selected={options.backgroundColor}
 						options={backgroundColors}
 						title='Цвет фона'
 						onChange={handleSelectBackColor}></Select>
 					<Select
-						selected={contentWidth}
+						selected={options.contentWidth}
 						options={contentWidthArr}
 						title='Ширина контента'
 						onChange={handleSelectContentWidth}></Select>
@@ -163,11 +137,7 @@ export const ArticleParamsForm = ({
 							type='reset'
 							onClick={handleFormResetBtn}
 						/>
-						<Button
-							title='Применить'
-							type='submit'
-							onClick={handleFormSubmitBtn}
-						/>
+						<Button title='Применить' type='submit' />
 					</div>
 				</form>
 			</aside>
